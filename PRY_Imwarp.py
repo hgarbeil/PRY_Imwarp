@@ -66,5 +66,37 @@ class PRY_Imwarp :
         #plt.xscale((300,800))
         plt.show()
         print (self.ynew.size)
+
+
+    def apply_shift_to_file (self, infile, outfile, ns, nl, nframes):
+        # go through frame by frame
+        framebytes = ns * nl * 2
+
+        fp = open(infile, "rb")
+        for i in range (nframes) :
+            inframe = np.fromfile(fp, dtype=np.uint16, count=ns*nl).reshape (nl, ns)
+            fillval = np.mean(inframe)
+            xoff = 3.3
+            ixoff = 3
+            frac = xoff-ixoff
+            yoff = 7.4
+            iyoff = 7
+            yfrac = yoff-iyoff
+
+            x0 = np.roll(inframe, ixoff, axis=1)
+            x1 = np.roll(inframe,ixoff+1, axis=1)
+            newx = (1-frac) * x0 + (frac) * x1
+            inframe[:]=newx
+            x0 = np.roll(inframe, iyoff, axis=0)
+            x1 = np.roll(inframe,iyoff+1, axis=0)
+            newx = (1-yfrac) * x0 + (yfrac) * x1
+            newx[0:iyoff,:] = fillval
+            newx[:,0:ixoff] = fillval
+        newx.tofile(outfile)
+
+
+
 pry = PRY_Imwarp()
-pry.readAttFile ('/Users/hg/Desktop/hyti_attfile1.txt')
+#pry.readAttFile ('/Users/hg/Desktop/hyti_attfile1.txt')
+ifile = '/hbeta/harold/workdir/tircis/phot_5_20170428/TIR-170428115059-ext_hot_47-scan.bsqmn'
+pry.apply_shift_to_file(ifile, '/hbeta/harold/workdir/tircis/phot_5_20170428/testfile', 324, 256, 1)
